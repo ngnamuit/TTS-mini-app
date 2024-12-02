@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-Speech App</title>
+    <link rel="stylesheet" href="frontend/style/index.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Text-to-Speech App</h1>
+            <p>Nhập văn bản và nghe giọng nói được chuyển đổi!</p>
+        </header>
+        <main>
+            <form id="text-to-speech-form">
+                <textarea id="text" rows="5" placeholder="Nhập văn bản của bạn tại đây..."></textarea>
+                <div class="options">
+                    <label for="engine">Chọn công cụ:</label>
+                    <select id="engine">
+                        <option value="pyttsx3">pyttsx3 (Offline)</option>
+                        <option value="google">Google TTS (Online)</option>
+                    </select>
+                </div>
+                <button type="button" id="convert">Chuyển đổi</button>
+            </form>
+            <audio id="audio" controls style="display: none;"></audio>
+        </main>
+        <footer>
+            <p>&copy; 2024 Text-to-Speech App. Tất cả các quyền được bảo lưu.</p>
+        </footer>
+    </div>
+    <script src="/frontend/app.js"></script>
+</body>
+</html>
