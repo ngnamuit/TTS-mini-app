@@ -1,0 +1,6 @@
+fastapi==0.95.2
+uvicorn==0.22.0
+gtts==2.5.4
+google-cloud-texttospeech==2.14.1
+python-multipart
+pyobjc==9.2
