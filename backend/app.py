@@ -54,10 +54,12 @@ async def text_to_speech(text: str = Form(...), engine: str = Form("pyttsx3")):
 
             print("[RUNTIME][GTTS Parallel] %s seconds ---" % (time.time() - start_time))
             # Generator to stream audio to the client
+            # region #TODO
             def audio_generator():
                 for audio in audio_results:
                     yield audio
             return StreamingResponse(audio_generator(), media_type="audio/mpeg")
+            # endregion
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
     return {"error": "Engine not supported"}
