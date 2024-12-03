@@ -1,4 +1,3 @@
-import pyttsx3
 import os
 from gtts import gTTS
 from google.cloud import texttospeech

@@ -1,9 +1,13 @@
 import os
-from fastapi import FastAPI, Form
-from fastapi.responses import FileResponse, HTMLResponse
+import time
+from gtts import gTTS
+from io import BytesIO
+from concurrent.futures import ThreadPoolExecutor
+from fastapi import FastAPI, Form, HTTPException
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from backend.tts_engine import text_to_speech_gtts, text_to_speech_google
+
 
 # init app
 app = FastAPI()
@@ -38,12 +42,44 @@ async def text_to_speech(text: str = Form(...), engine: str = Form("pyttsx3")):
     API to convert text to speech.
     Parameters:
     - text: The text to be converted.
-    - engine: The Text-to-Speech engine ("gtts" or "google").
+    - engine: The Text-to-Speech engine ("gtts").
     """
-    if engine in ["pyttsx3", "gtts"]:
-        file_path = text_to_speech_gtts(text, OUTPUT_DIR)
-    elif engine == "google":
-        file_path = text_to_speech_google(text, OUTPUT_DIR)
-    else:
-        return {"error": "Engine not supported"}
-    return FileResponse(file_path, media_type="audio/mpeg", filename=os.path.basename(file_path))
+    if engine == "gtts":
+        try:
+            start_time = time.time()
+            text_chunks = split_text_into_chunks(text, max_chars=500)
+
+            with ThreadPoolExecutor() as executor:
+                audio_results = list(executor.map(process_chunk, text_chunks))
+
+            print("[RUNTIME][GTTS Parallel] %s seconds ---" % (time.time() - start_time))
+            # Generator to stream audio to the client
+            def audio_generator():
+                for audio in audio_results:
+                    yield audio
+            return StreamingResponse(audio_generator(), media_type="audio/mpeg")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
+    return {"error": "Engine not supported"}
+
+def process_chunk(chunk):
+    tts = gTTS(text=chunk, lang="vi")
+    audio_data = BytesIO()
+    tts.write_to_fp(audio_data)
+    audio_data.seek(0)
+    return audio_data.read()
+
+def split_text_into_chunks(text, max_chars=500):
+    sentences = text.split(". ")
+    chunks = []
+    current_chunk = ""
+
+    for sentence in sentences:
+        if len(current_chunk) + len(sentence) < max_chars:
+            current_chunk += sentence + ". "
+        else:
+            chunks.append(current_chunk.strip())
+            current_chunk = sentence + ". "
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+    return chunks
