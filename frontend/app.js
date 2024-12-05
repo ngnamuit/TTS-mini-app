@@ -4,13 +4,13 @@ document.getElementById("convert").addEventListener("click", async () => {
     const engine = document.getElementById("engine").value;
 
     if (!text) {
-        alert("Vui lòng nhập văn bản!");
+        alert("Please input text!");
         return;
     }
 
     // Disable the button and show a loading message
     button.disabled = true;
-    button.textContent = "Đang xử lý...";
+    button.textContent = "Processing ...";
 
     try {
         console.time("Execution Time"); // Start measuring execution time
@@ -31,7 +31,7 @@ document.getElementById("convert").addEventListener("click", async () => {
             audio.style.display = "block";
             audio.play();
         } else {
-            alert("Có lỗi xảy ra, vui lòng thử lại!");
+            alert("There's an error, Please check again!");
         }
     } catch (error) {
         console.error("Error:", error);
