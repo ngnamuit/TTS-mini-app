@@ -1,4 +1,3 @@
-import os
 import time
 from gtts import gTTS
 from io import BytesIO
@@ -8,8 +7,6 @@ from fastapi import FastAPI, Form, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-# import logging
-# logging.basicConfig(level=logging.DEBUG)
 
 
 
