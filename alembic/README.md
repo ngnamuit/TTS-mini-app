@@ -1,4 +1,4 @@
-## Follow these step for first run app
+## Follow these step for first app running
 ### 1. Initialize Alembic
 - If you haven’t already initialized Alembic in your project, do so by running: `alembic init alembic`
 
@@ -18,9 +18,7 @@
     alembic revision --autogenerate -m "Create Transaction table"
     ```
 
-### 4. Run cmd
-- Create new alembic: `alembic revision --autogenerate -m "Create Transaction table"`
-- Migrate it to database: `alembic upgrade head`
+- Upgrade it to database: `alembic upgrade head`
     
     
    
