@@ -42,27 +42,32 @@ async def text_to_speech(text: str = Form(...), engine: str = Form("gtts"), spee
     """
     if engine == "gtts":
         try:
+            print(f"[GTTS Parallel] RUNNING =========")
             speed = float(speed)
             start_time = time.time()
             text_chunks = split_text_into_chunks(text, max_chars=500)
             with ThreadPoolExecutor() as executor:
+                print(f"[GTTS Parallel] ThreadPoolExecutor =========")
                 audio_results = list(executor.map(lambda chunk: process_chunk(chunk, speed), text_chunks))
 
             # Generator to stream audio to the client
             # region #TODO
             def audio_generator():
                 for audio in audio_results:
+                    print(f"[GTTS Parallel] audio_generator =========")
                     yield audio
 
             print(f"[RUNTIME][GTTS Parallel] {time.time() - start_time} seconds, ---- speed {speed}")
             return StreamingResponse(audio_generator(), media_type="audio/mpeg")
             # endregion
         except Exception as e:
+            print(f"[Exception][GTTS Parallel] {str(e)}=========")
             raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
     return {"error": "Engine not supported"}
 
 def process_chunk(chunk, speed=1.0):
     tts = gTTS(text=chunk, lang="vi")
+    time.sleep(0.5)
     audio_data = BytesIO()
     tts.write_to_fp(audio_data)
     audio_data.seek(0)

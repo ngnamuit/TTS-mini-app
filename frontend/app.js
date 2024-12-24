@@ -19,7 +19,7 @@ document.getElementById("convert").addEventListener("click", async () => {
         formData.append("text", text);
         formData.append("engine", engine);
 
-        const response = await fetch("http://127.0.0.1:8000/text-to-speech/", {
+        const response = await fetch("/text-to-speech/", {
             method: "POST",
             body: formData
         });
