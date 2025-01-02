@@ -1,4 +1,8 @@
 import time
+import re
+import logging
+import uvicorn
+from uvicorn.config import LOGGING_CONFIG
 from gtts import gTTS
 from io import BytesIO
 from pydub import AudioSegment
@@ -9,9 +13,22 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 
-
-# init app
+# region init app
 app = FastAPI()
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",  # Custom datetime format
+)
+# Customize Uvicorn's default logging configuration
+LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s - %(levelname)s - %(message)s"
+LOGGING_CONFIG["formatters"]["default"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(client_addr)s - \"%(request_line)s\" %(status_code)s"
+LOGGING_CONFIG["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+
+logging.config.dictConfig(LOGGING_CONFIG)
+# endregion init app
+
 
 # middleware avoid cors
 app.add_middleware(
@@ -42,26 +59,27 @@ async def text_to_speech(text: str = Form(...), engine: str = Form("gtts"), spee
     """
     if engine == "gtts":
         try:
-            print(f"[GTTS Parallel] RUNNING =========")
+            logging.info(f"[GTTS Parallel] RUNNING =========")
             speed = float(speed)
             start_time = time.time()
-            text_chunks = split_text_into_chunks(text, max_chars=500)
+
+            text_chunks = split_text_into_chunks(text, max_chars=5000)
             with ThreadPoolExecutor() as executor:
-                print(f"[GTTS Parallel] ThreadPoolExecutor =========")
+                logging.info(f"[GTTS Parallel] ThreadPoolExecutor =========")
                 audio_results = list(executor.map(lambda chunk: process_chunk(chunk, speed), text_chunks))
 
             # Generator to stream audio to the client
             # region #TODO
             def audio_generator():
                 for audio in audio_results:
-                    print(f"[GTTS Parallel] audio_generator =========")
+                    logging.info(f"[GTTS Parallel] audio_generator =========")
                     yield audio
 
-            print(f"[RUNTIME][GTTS Parallel] {time.time() - start_time} seconds, ---- speed {speed}")
+            logging.info(f"[RUNTIME][GTTS Parallel] {time.time() - start_time} seconds, ---- speed {speed}")
             return StreamingResponse(audio_generator(), media_type="audio/mpeg")
             # endregion
         except Exception as e:
-            print(f"[Exception][GTTS Parallel] {str(e)}=========")
+            logging.info(f"[Exception][GTTS Parallel] {str(e)}=========")
             raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
     return {"error": "Engine not supported"}
 
@@ -94,17 +112,24 @@ def adjust_audio(audio_data, speed):
     output_audio.seek(0)
     return output_audio.read()
 
-def split_text_into_chunks(text, max_chars=500):
-    sentences = text.split(". ")
+def split_text_into_chunks(text, max_chars):
+    # remove characters that are not letters (a-z or A-Z) or spaces
+    cleaned_text = re.sub(r'[^\w\sÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠ-ỹ.]', '', text)
+    # replace multiple spaces with a single space
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+    sentences = cleaned_text.split(". ")
     chunks = []
     current_chunk = ""
-
     for sentence in sentences:
         if len(current_chunk) + len(sentence) < max_chars:
             current_chunk += sentence + ". "
         else:
-            chunks.append(current_chunk.strip())
+            current_chunk = current_chunk.strip()
+            if current_chunk:
+                chunks.append(current_chunk)
             current_chunk = sentence + ". "
+
     if current_chunk:
-        chunks.append(current_chunk.strip())
+        chunks.append(current_chunk)
+    logging.info(f"[SPLIT TEXT] len={len(chunks)}")
     return chunks
