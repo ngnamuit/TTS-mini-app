@@ -27,8 +27,10 @@ document.getElementById("convert").addEventListener("click", async () => {
         if (response.ok) {
             const blob = await response.blob();
             const audio = document.getElementById("audio");
+            const replay = document.getElementById("replay");
             audio.src = URL.createObjectURL(blob);
             audio.style.display = "block";
+            replay.style.display = "revert";
             audio.play();
         } else {
             alert("There's an error, Please check again!");
@@ -44,3 +46,23 @@ document.getElementById("convert").addEventListener("click", async () => {
     }
 
 });
+
+const replayButton = document.getElementById("replay");
+if (replayButton) {
+    replayButton.addEventListener("click", () => {
+        console.log("Replay button clicked!");
+        const audio = document.getElementById("audio");
+        const speed = document.getElementById("speed").value;
+        console.log("Selected speed: ", speed);
+
+        if (audio && audio.src) {
+
+            audio.playbackRate = parseFloat(speed);
+            audio.play().then(() => {
+                console.log("Audio replayed successfully.");
+            }).catch((error) => {
+                console.error("Error replaying audio: ", error);
+            });
+        }
+    });
+}

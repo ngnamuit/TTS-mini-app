@@ -1,7 +1,6 @@
 import time
 import re
 import logging
-import uvicorn
 from uvicorn.config import LOGGING_CONFIG
 from gtts import gTTS
 from io import BytesIO
