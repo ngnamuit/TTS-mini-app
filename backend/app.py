@@ -6,10 +6,12 @@ from gtts import gTTS
 from io import BytesIO
 from pydub import AudioSegment
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import FastAPI, Form, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from service import web_scrapping as WebScrappingSvr
+
 
 
 # region init app
@@ -82,6 +84,14 @@ async def text_to_speech(text: str = Form(...), engine: str = Form("gtts"), spee
             raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
     return {"error": "Engine not supported"}
 
+
+@app.route('/fetch-content', methods=['POST'])
+async def fetch_content(request: Request):
+    data = await request.json()
+    url = data.get("url")
+    selectors = data.get("selectors").split(",")
+    content = WebScrappingSvr.fetch_content(url, selectors)
+    return JSONResponse(status_code=200, content={"content": content})
 def process_chunk(chunk, speed=1.0):
     tts = gTTS(text=chunk, lang="vi")
     time.sleep(0.5)
